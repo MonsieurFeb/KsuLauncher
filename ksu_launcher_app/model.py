@@ -21,7 +21,7 @@ import csv
 import urllib.request
 import math
 
-VERSIONS_URL = 'https://docs.google.com/spreadsheets/d/1rW6vIDIhrlXweWmcSU3eNVbSrhQjxs346XdkWJlaNUw/export?format=csv'
+VERSIONS_URL = 'https://docs.google.com/spreadsheets/d/1Et9mHycuRBcrgqMI2ry2Cyn-sA-lA9Mbv3xjVVgrgHA/export?format=csv'
 AUTHLIB_URL = "https://authserver.ely.by"
 
 class LauncherAPI:
