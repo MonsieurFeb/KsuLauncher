@@ -89,7 +89,7 @@ print("KsuLauncher started. Port conflict protection enabled.")
 # Robust startup logic to find a suitable browser
 # Chrome and Edge are prioritized for standalone window mode.
 # Default is the safe fallback.
-for browser in ['chrome', 'msedge', 'edge', 'default']:
+for browser in ['chrome', 'firefox', 'default']:
     try:
         print(f"Starting KsuLauncher in {browser} mode...")
         eel.start('index.html', size=(900, 700), port=0, mode=browser)

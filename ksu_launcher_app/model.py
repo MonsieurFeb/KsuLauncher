@@ -13,7 +13,6 @@ import tkinter as tk
 from tkinter import filedialog
 import gdown
 import minecraft_launcher_lib
-from minecraft_launcher_lib._helper import SUBPROCESS_STARTUP_INFO
 from minecraft_launcher_lib.vanilla_launcher import do_vanilla_launcher_profiles_exists, \
     create_empty_vanilla_launcher_profiles_file
 from nbt import nbt
@@ -21,13 +20,13 @@ import csv
 import urllib.request
 import math
 
-VERSIONS_URL = 'https://docs.google.com/spreadsheets/d/1Et9mHycuRBcrgqMI2ry2Cyn-sA-lA9Mbv3xjVVgrgHA/export?format=csv'
+VERSIONS_URL = 'https://docs.google.com/spreadsheets/d/1rW6vIDIhrlXweWmcSU3eNVbSrhQjxs346XdkWJlaNUw/export?format=csv'
 AUTHLIB_URL = "https://authserver.ely.by"
 
 class LauncherAPI:
     def __init__(self):
-        # Global fix: Always use the root of C: to avoid Cyrillic/Admin issues in AppData
-        self.minecraft_dir = "C:\\.ksulauncher"
+        # Linux: use home directory
+        self.minecraft_dir = os.path.join(os.path.expanduser("~"), ".ksulauncher")
         # Ensure directories exist
         os.makedirs(self.minecraft_dir, exist_ok=True)
         self.versions_data = []
@@ -159,7 +158,6 @@ class LauncherAPI:
                 stderr=subprocess.PIPE,
                 cwd=target_directory,
                 check=True,
-                startupinfo=SUBPROCESS_STARTUP_INFO
             )
 
             os.remove(installer_path)
@@ -193,7 +191,6 @@ class LauncherAPI:
                 stderr=subprocess.PIPE,
                 cwd=target_directory,
                 check=True,
-                startupinfo=SUBPROCESS_STARTUP_INFO
             )
 
             # Создание natives папки
@@ -221,7 +218,7 @@ class LauncherAPI:
             if not info:
                 report_callback(f"Ошибка: Версия не найдена", 0)
                 return
-            game_dir = os.path.abspath(self.settings.get("path", self.minecraft_dir))+"\\"+info['name']
+            game_dir = os.path.join(os.path.abspath(self.settings.get("path", self.minecraft_dir)), info['name'])
             loader = minecraft_launcher_lib.mod_loader.get_mod_loader(info['modloader'])
             version_id = loader.get_installed_version(info['minecraft_version'], info['modloader_version'])
             version_path = os.path.join(game_dir, "versions", version_id)
@@ -242,8 +239,8 @@ class LauncherAPI:
                             else:
                                 # Final failure suggest fix
                                 err_msg = str(pe)
-                                if "Permission denied" in err_msg or "WinError 5" in err_msg:
-                                    report_callback("ОШИБКА ДОСТУПА: Попробуйте сменить папку игры в Настройках на путь без русских букв (например, C:\\Games\\Ksu).", 0)
+                                if "Permission denied" in err_msg:
+                                    report_callback("ОШИБКА ДОСТУПА: Попробуйте сменить папку игры в Настройках на другой путь (например, ~/Ksulauncher).", 0)
                                     return
                                 raise pe
                 # 2. Install modloader (Smart Start Skip)
@@ -304,7 +301,7 @@ class LauncherAPI:
             # Формирование команды запуска майна
             # warning указывает на то что переменная может быть не проинициализирована
             cmd = minecraft_launcher_lib.command.get_minecraft_command(version_id, game_dir, options)
-            proc = subprocess.Popen(cmd, cwd=game_dir, creationflags=subprocess.CREATE_NO_WINDOW)
+            proc = subprocess.Popen(cmd, cwd=game_dir)
             threading.Thread(target=lambda: proc.wait(), daemon=True).start()
         except Exception as e:
             report_callback(f"Ошибка: {str(e)}", 0)
@@ -315,7 +312,7 @@ class LauncherAPI:
         root = tk.Tk(); root.withdraw(); root.attributes('-topmost', True)
         path = filedialog.askdirectory(initialdir=self.minecraft_dir)
         root.destroy()
-        return path.replace("/", "\\") if path else None
+        return path if path else None
 
 
     def open_url(self, url):
@@ -373,7 +370,7 @@ class LauncherAPI:
             dl_url = file_info['url']
             fname = file_info['filename']
             # Target folder (resourcepacks or shaderpacks)
-            game_dir = self.settings.get("path", self.minecraft_dir)+"\\"+info['name']
+            game_dir = os.path.join(self.settings.get("path", self.minecraft_dir), info['name'])
             target_dir = os.path.join(game_dir, folder_name)
             os.makedirs(target_dir, exist_ok=True)
             # Download
@@ -512,7 +509,7 @@ class LauncherAPI:
             filetypes=[("JAR files", "*.jar")]
         )
         root.destroy()
-        return path.replace("/", "\\") if path else None
+        return path if path else None
 
 
     # Для работы authlib-injector в пакете
